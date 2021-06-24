@@ -10,6 +10,7 @@ PLUGIN_SSH_OPTIONS_FILE="${PLUGIN_DIR}/options"
 MAX_POD_CREATION_TIME=10   # unit: second
 SSH_AGENT_ENV_FILE="${PLUGIN_DIR}/sshagent-env"
 SSH_AGENT_PID_FILE="${PLUGIN_DIR}/sshagent-pid"
+RANDOM_POD_NAME=$(xxd -l 16 -c 16 -p < /dev/random)
 
 help(){
   echo "Usage: "
@@ -59,7 +60,7 @@ EOF
 
 cleanup_sshjump_pod(){
   echo "Clearning up SSH Jump host (Pod)..."
-  kubectl delete pod sshjump --grace-period 0
+  kubectl delete pod $RANDOM_POD_NAME --grace-period 0
 }
 
 run_ssh_node(){
@@ -70,14 +71,12 @@ run_ssh_node(){
   local sshargs="$5"
 
   # Install an SSH Server if not yet installed
-  r=$(kubectl get pod sshjump 2>/dev/null | tail -1 | awk '{print $1}') # 
-  if [ "${r}" != "sshjump" ];then
-    echo "Creating SSH jump host (Pod)..."
-    cat <<EOF | kubectl apply -f -
+  echo "Creating SSH jump host (Pod)..."
+  cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: sshjump
+  name: $RANDOM_POD_NAME
   labels:
     env: test
 spec:
@@ -90,18 +89,17 @@ spec:
     "kubernetes.io/os": linux
 EOF
 
-    # Wait until sshjump gets ready
-    c=1
-    while [[ ${c} -le $(( MAX_POD_CREATION_TIME * 10 )) ]];
-    do
-      pod_status=$(kubectl get pod sshjump 2>/dev/null | tail -1 | awk '{print $3}')
-      if [ "${pod_status}" = "Running" ]; then
-        break
-      fi
-      (( c++ ))
-      sleep 0.1
-    done
-  fi
+  # Wait until sshjump gets ready
+  c=1
+  while [[ ${c} -le $(( MAX_POD_CREATION_TIME * 10 )) ]];
+  do
+    pod_status=$(kubectl get pod $RANDOM_POD_NAME 2>/dev/null | tail -1 | awk '{print $3}')
+    if [ "${pod_status}" = "Running" ]; then
+      break
+    fi
+    (( c++ ))
+    sleep 0.1
+  done
 
   local identity_sshjump=${identity}
   local pubkey_sshjump=${pubkey}
@@ -115,12 +113,12 @@ EOF
   fi
 
   # Setup portforward
-  kubectl port-forward sshjump 2222:22 2>/dev/null &
+  kubectl port-forward $RANDOM_POD_NAME 2222:22 2>/dev/null &
   pid_port_forward=$!
 
   # Inject public SSH key to sshjump
   cat ${pubkey_sshjump} | \
-    kubectl exec -i sshjump -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
+    kubectl exec -i $RANDOM_POD_NAME -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
 
   # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired Node
   ssh -i ${identity} -p ${port} ${sshuser}@${destnode} \

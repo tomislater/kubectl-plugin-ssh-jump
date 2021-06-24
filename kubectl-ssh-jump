@@ -30,11 +30,6 @@ Options:
   -p, --pubkey <pub_key_file>     Public key file
   -P, --port <port>               SSH port for target node SSH server (default:22)
   -a, --args <args>               Args to exec in ssh session
-  --cleanup-agent                 Clearning up SSH agent at the end
-                                  The agent is NOT cleaned up in case that
-                                  --skip-agent option is given
-  --cleanup-jump                  Clearning up sshjump pod at the end
-                                  Default: Skip cleaning up sshjump pod
   -h, --help                      Show this message
 
 Example:

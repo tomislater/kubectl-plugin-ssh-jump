@@ -118,9 +118,6 @@ EOF
   kubectl port-forward sshjump 2222:22 2>/dev/null &
   pid_port_forward=$!
 
-  # Wait a bit for the port forwarding to get ready for connection handling for 2222
-  sleep 2
-
   # Inject public SSH key to sshjump
   cat ${pubkey_sshjump} | \
     kubectl exec -i sshjump -- /bin/bash -c "cat > /root/.ssh/authorized_keys"

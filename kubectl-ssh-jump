@@ -30,9 +30,6 @@ Options:
   -p, --pubkey <pub_key_file>     Public key file
   -P, --port <port>               SSH port for target node SSH server (default:22)
   -a, --args <args>               Args to exec in ssh session
-  --skip-agent                    Skip automatically starting SSH agent and adding 
-                                  SSH Identity key into the agent before SSH login
-                                  (=> You need to manage SSH agent by yourself)
   --cleanup-agent                 Clearning up SSH agent at the end
                                   The agent is NOT cleaned up in case that
                                   --skip-agent option is given
@@ -71,49 +68,9 @@ port=${port}
 EOF
 }
 
-get_node_list(){
-  echo "List of destination node..."
-  kubectl get no -o custom-columns=Hostname:.metadata.name,Internal-IP:'{.status.addresses[?(@.type=="InternalIP")].address}'
-  echo ""
-}
-
 cleanup_sshjump_pod(){
   echo "Clearning up SSH Jump host (Pod)..."
   kubectl delete pod sshjump
-}
-
-check_and_start_agent(){
-  local identity="$1"
-
-  is_alive="no"
-  if [ -f ${SSH_AGENT_PID_FILE} ]; then
-    SSH_AGENT_PID=$(cat ${SSH_AGENT_PID_FILE})
-    source ${SSH_AGENT_ENV_FILE}
-    if [ ${SSH_AGENT_PID} -gt 0 ] && ps -p ${SSH_AGENT_PID} > /dev/null
-    then
-      echo "ssh-agent is already running"
-      is_alive="yes"
-    fi
-  fi
-  if [ "${is_alive}" = "no" ]; then
-    ssh-agent > ${SSH_AGENT_ENV_FILE}
-    agent_pid=$(cat ${SSH_AGENT_ENV_FILE} | grep 'echo Agent pid' |sed 's/echo Agent pid //; s/;//')
-    echo "Started ssh-agent: pid=${agent_pid}"
-    echo ${agent_pid} > ${SSH_AGENT_PID_FILE}
-    source ${SSH_AGENT_ENV_FILE}
-    ssh-add ${identity}
-  fi
-}
-
-cleanup_agent(){
-  echo "Killing ssh-agent..."
-  ssh-agent -k
-  if [ -f ${SSH_AGENT_PID_FILE} ]; then
-    rm ${SSH_AGENT_PID_FILE}
-  fi 
-  if [ -f ${SSH_AGENT_ENV_FILE} ]; then
-    rm ${SSH_AGENT_ENV_FILE}
-  fi 
 }
 
 run_ssh_node(){
@@ -191,24 +148,12 @@ EOF
 }
 
 plugin_main() {
-  skip_agent=no
-  cleanup_jump=no
-  cleanup_agent=no
   while [ $# -gt 0 ] ; do
     nSkip=1
     case $1 in
       "-h" | "--help")
 	help
 	exit 0
-	;;
-      "--cleanup-jump")
-	cleanup_jump=yes
-	;;
-      "--cleanup-agent")
-	cleanup_agent=yes
-	;;
-      "--skip-agent")
-	skip_agent=yes
 	;;
       "-u" | "--user" )
 	c_sshuser=$2
@@ -244,13 +189,6 @@ plugin_main() {
   if [[ "$(type kubectl &>/dev/null; echo $?)" -eq 1 ]]; then
     echo "Error: missing kubectl command" >&2
     echo "Please install kubectl (https://kubernetes.io/docs/tasks/tools/install-kubectl/)" >&2
-    exit 1
-  fi
-
-  if [ ! -n "${destnode}" ]; then
-    help >&2
-    echo ""
-    get_node_list
     exit 1
   fi
 
@@ -302,19 +240,10 @@ plugin_main() {
   # Caching current ssh options
   write_options "${c_sshuser}" "${c_identity}" "${c_pubkey}" "${c_port}"
 
-  if [ "${skip_agent}" = "no" ]; then
-    check_and_start_agent ${c_identity}
-  fi
   # SSH Logging into desitnation node via Jump host
   run_ssh_node "${destnode}" "${c_sshuser}" "${c_identity}" "${c_pubkey}" "${c_port}" "${sshargs}"
 
-  # Cleaning up resources if needed
-  if [ "${cleanup_jump}" = "yes" ]; then
-    cleanup_sshjump_pod
-  fi
-  if [ "${skip_agent}" = "no" ] && [ "${cleanup_agent}" = "yes" ]; then
-    cleanup_agent
-  fi
+  cleanup_sshjump_pod
 }
 
 plugin_main "$@"

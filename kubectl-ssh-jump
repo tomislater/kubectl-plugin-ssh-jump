@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-#
-# A kubectl plugin to ssh into Kubernetes nodes using a SSH jump host Pod
-#
 
 [[ -n $DEBUG ]] && set -x -e
 
@@ -11,6 +8,7 @@ MAX_POD_CREATION_TIME=10   # unit: second
 SSH_AGENT_ENV_FILE="${PLUGIN_DIR}/sshagent-env"
 SSH_AGENT_PID_FILE="${PLUGIN_DIR}/sshagent-pid"
 RANDOM_POD_NAME=$(xxd -l 16 -c 16 -p < /dev/random)
+LOCAL_PORT=2222
 
 help(){
   echo "Usage: "
@@ -113,17 +111,25 @@ EOF
   fi
 
   # Setup portforward
-  kubectl port-forward $RANDOM_POD_NAME 2222:22 2>/dev/null &
+  # check if a port is not used; if it's used, increment and check again
+  sleep 0.2
+  nc -z 127.0.0.1 ${LOCAL_PORT}
+  while [ $? = 0 ]; do
+      (( LOCAL_PORT++ ))
+      nc -z 127.0.0.1 ${LOCAL_PORT}
+  done
+
+  kubectl port-forward ${RANDOM_POD_NAME} ${LOCAL_PORT}:22 2>/dev/null &
   pid_port_forward=$!
 
   # Inject public SSH key to sshjump
   cat ${pubkey_sshjump} | \
-    kubectl exec -i $RANDOM_POD_NAME -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
+    kubectl exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
 
   # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired Node
   ssh -i ${identity} -p ${port} ${sshuser}@${destnode} \
-    -o "ProxyCommand ssh root@127.0.0.1 -p 2222 -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
-    -o "StrictHostKeyChecking=no" $sshargs
+    -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
+    -o "StrictHostKeyChecking=no" ${sshargs}
 
   # Stop port-forward
   kill -3 ${pid_port_forward} 2>/dev/null

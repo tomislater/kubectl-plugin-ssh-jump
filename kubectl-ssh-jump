@@ -92,14 +92,14 @@ EOF
 
     # Wait until sshjump gets ready
     c=1
-    while [[ ${c} -le ${MAX_POD_CREATION_TIME} ]];
+    while [[ ${c} -le $(( MAX_POD_CREATION_TIME * 10 )) ]];
     do
       pod_status=$(kubectl get pod sshjump 2>/dev/null | tail -1 | awk '{print $3}')
       if [ "${pod_status}" = "Running" ]; then
         break
       fi
       (( c++ ))
-      sleep 1
+      sleep 0.1
     done
   fi
 

@@ -190,6 +190,7 @@ plugin_main() {
   if [ ! -d ${PLUGIN_DIR} ]; then
     mkdir -p ${PLUGIN_DIR}
   fi
+  
   read_options
 
   if [ ! -n "${c_sshuser}" ]; then
@@ -199,6 +200,7 @@ plugin_main() {
     echo "using: sshuser=${sshuser}"
     c_sshuser="${sshuser}"
   fi
+
   if [ ! -f "${c_identity}" ]; then
     if [ ! -f "${identity}" ]; then
       echo "Error: identity file is required" >&2
@@ -208,18 +210,14 @@ plugin_main() {
     echo "using: identity=${identity}"
     c_identity="${identity}"
   fi
+
   if [ ! -f "${c_pubkey}" ]; then
-    # From v0.4.0 pubkey file is optional to support PEM scenario
-    # where you don't have public key on your side
-    #if [ ! -n "${pubkey}" ]; then
-    #  help >&2
-    #  exit 1
-    #fi
     if [ -f "${pubkey}" ]; then
       echo "using: pubkey=${pubkey}"
       c_pubkey="${pubkey}"
     fi
   fi
+
   if [ ! -n "${c_port}" ]; then
     if [ ! -n "${port}" ]; then
       port="22"    # default: 22

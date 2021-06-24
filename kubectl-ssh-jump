@@ -111,13 +111,11 @@ EOF
   fi
 
   # Setup portforward
-  # check if a port is not used; if it's used, increment and check again
-  sleep 0.2
-  nc -z 127.0.0.1 ${LOCAL_PORT}
-  while [ $? = 0 ]; do
+  # "lock" mechanism
+  while [ -f "${PLUGIN_DIR}/${LOCAL_PORT}.lock" ]; do
       (( LOCAL_PORT++ ))
-      nc -z 127.0.0.1 ${LOCAL_PORT}
   done
+  touch ${PLUGIN_DIR}/${LOCAL_PORT}.lock
 
   kubectl port-forward ${RANDOM_POD_NAME} ${LOCAL_PORT}:22 2>/dev/null &
   pid_port_forward=$!
@@ -133,6 +131,8 @@ EOF
 
   # Stop port-forward
   kill -3 ${pid_port_forward} 2>/dev/null
+
+  rm -f ${PLUGIN_DIR}/${LOCAL_PORT}.lock
 }
 
 plugin_main() {

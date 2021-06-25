@@ -2,11 +2,11 @@
 
 [![kubectl plugin](https://img.shields.io/badge/kubectl-plugin-blue.svg)](https://github.com/topics/kubectl-plugin)
 
-A kubectl plugin to SSH into Kubernetes nodes using a SSH jump host Pod
+A kubectl plugin to SSH into any machine within a network using a SSH jump host Pod.
 
-A `jump host` Pod is an intermediary Pod or an SSH gateway to Kubernetes node machines, through which a connection can be made to the node machines.
+A `jump host` Pod is an intermediary Pod or an SSH gateway, through which a connection can be made to any machines within a network.
 
-Here is an scenario where you want to connect to Kubernetes node, but you have to go through a jump host Pod, because of firewalling, access privileges. etc. There is a number of valid reasons why the jump hosts are needed...
+Here is an scenario where you want to connect to a machine, but you have to go through a jump host Pod, because of firewalling, access privileges. etc. There is a number of valid reasons why the jump hosts are needed...
 
 ![](assets/arch-ssh-jumphost.png)
 
@@ -22,7 +22,7 @@ Install the plugin by copying the script in the $PATH of your shell.
 
 ```sh
 # Get source
-$ git clone https://github.com/yokawasa/kubectl-plugin-ssh-jump.git
+$ git clone git@github.com:tomislater/kubectl-plugin-ssh-jump.git
 $ cd kubectl-plugin-ssh-jump
 $ chmod +x kubectl-ssh-jump
 # Add kubeclt-ssh-jump to the install path.

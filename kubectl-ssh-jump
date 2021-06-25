@@ -78,10 +78,10 @@ metadata:
     jump_host: yes
 spec:
   containers:
-  - name: sshjump
-    image: corbinu/ssh-server
-    ports:
-    - containerPort: 22
+    - name: sshjump
+      image: corbinu/ssh-server
+      ports:
+        - containerPort: 22
   nodeSelector:
     "kubernetes.io/os": linux
 EOF

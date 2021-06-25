@@ -52,6 +52,7 @@ Options:
                                   the digits '0' through '9', or hyphen ('-')
   -u, --user <sshuser>            SSH User name
   -i, --identity <identity_file>  Identity key file, or PEM(Privacy Enhanced Mail)
+  --image <image>                 Your custom image
   -P, --port <port>               SSH port for target node SSH server (default:22)
   -a, --args <args>               Args to exec in ssh session
   -h, --help                      Show this message

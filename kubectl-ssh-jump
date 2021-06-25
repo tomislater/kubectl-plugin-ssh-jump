@@ -26,6 +26,7 @@ Options:
                                   the digits '0' through '9', or hyphen ('-')
   -u, --user <sshuser>            SSH User name
   -i, --identity <identity_file>  Identity key file, or PEM(Privacy Enhanced Mail)
+  --image <image>                 Your custom image
   -P, --port <port>               SSH port for target node SSH server (default:22)
   -a, --args <args>               Args to exec in ssh session
   -h, --help                      Show this message
@@ -66,6 +67,7 @@ run_ssh_node(){
   local identity="$3"
   local port="$4"
   local sshargs="$5"
+  local image="$6"
 
   # Install an SSH Server if not yet installed
   echo "Creating SSH jump host (Pod)..."
@@ -73,13 +75,13 @@ run_ssh_node(){
 apiVersion: v1
 kind: Pod
 metadata:
-  name: $RANDOM_POD_NAME
+  name: ${RANDOM_POD_NAME}
   labels:
     jump_host: test
 spec:
   containers:
     - name: sshjump
-      image: corbinu/ssh-server
+      image: ${image}
       ports:
         - containerPort: 22
   nodeSelector:
@@ -150,6 +152,10 @@ plugin_main() {
       "-P" | "--port")
 	c_port=$2
 	nSkip=2
+  ;;
+      "--image")
+	c_image=$2
+	nSkip=2
 	;;
       "-a" | "--args" )
 	sshargs="$2"
@@ -208,11 +214,16 @@ plugin_main() {
     echo "using: args=${sshargs}"
   fi
 
+  if [ ! -n "${c_image}" ]; then
+    c_image="corbinu/ssh-server"
+    echo "using: image=${c_image}"
+  fi
+
   # Caching current ssh options
   write_options "${c_sshuser}" "${c_identity}" "${c_port}"
 
   # SSH Logging into desitnation node via Jump host
-  run_ssh_node "${destnode}" "${c_sshuser}" "${c_identity}" "${c_port}" "${sshargs}"
+  run_ssh_node "${destnode}" "${c_sshuser}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}"
 
   cleanup_sshjump_pod
 }

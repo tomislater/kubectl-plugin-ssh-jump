@@ -75,7 +75,7 @@ kind: Pod
 metadata:
   name: $RANDOM_POD_NAME
   labels:
-    env: test
+    jump_host: yes
 spec:
   containers:
   - name: sshjump

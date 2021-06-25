@@ -75,7 +75,7 @@ kind: Pod
 metadata:
   name: $RANDOM_POD_NAME
   labels:
-    jump_host: yes
+    jump_host: test
 spec:
   containers:
     - name: sshjump
@@ -98,9 +98,6 @@ EOF
     sleep 0.1
   done
 
-  local identity_sshjump=${identity}
-  local pubkey_sshjump=${pubkey}
-  
   # Generate temp private/public key to ssh to the sshjump if the pubkey isn't given
   identity_sshjump=${PLUGIN_DIR}/id_rsa_sshjump
   pubkey_sshjump=${PLUGIN_DIR}/id_rsa_sshjump.pub

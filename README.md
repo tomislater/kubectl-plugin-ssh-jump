@@ -102,8 +102,7 @@ Options:
   -h, --help                      Show this message
 
 Example:
-  Scenario1 - You have .pem file
-  $ kubectl ssh-jump -u ec2-user -i ~/.ssh/mykey.pem hostname
+  $ kubectl ssh-jump -u admin -i ~/.ssh/mykey.pem rabbit.internal.prod
 ```
 
 ## Useful Links
@@ -114,4 +113,4 @@ Example:
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/yokawasa/kubectl-plugin-ssh-jump
+Bug reports and pull requests are welcome on GitHub at https://github.com/tomislater/kubectl-plugin-ssh-jump

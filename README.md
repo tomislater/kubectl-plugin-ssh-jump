@@ -28,7 +28,7 @@ $ git clone git@github.com:tomislater/kubectl-plugin-ssh-jump.git
 $ cd kubectl-plugin-ssh-jump
 $ chmod +x kubectl-ssh-jump
 # Add kubeclt-ssh-jump to the install path.
-$ sudo cp -p kubectl-ssh-jump /usr/local/bin
+$ sudo cp -p kubectl-ssh-jump /usr/local/bin/kubectl-ssh_jump
 ```
 
 Once in the $PATH, run:

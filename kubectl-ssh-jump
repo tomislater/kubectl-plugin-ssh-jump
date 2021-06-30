@@ -3,8 +3,7 @@
 [[ -n $DEBUG ]] && set -x -e
 
 PLUGIN_DIR="${HOME}/.kube/kubectlssh"
-PLUGIN_SSH_OPTIONS_FILE="${PLUGIN_DIR}/options"
-MAX_POD_CREATION_TIME=10   # unit: second
+MAX_POD_CREATION_TIME=10   # unit: ~seconds
 RANDOM_POD_NAME=$(xxd -l 16 -c 16 -p < /dev/random)
 LOCAL_PORT=2222
 
@@ -30,27 +29,8 @@ Options:
   -h, --help                      Show this message
 
 Example:
-  $ kubectl ssh-jump -u admin -i ~/.ssh/mykey.pem rabbit.internal.prod
+  $ kubectl ssh-jump -i ~/.ssh/mykey.pem -u admin rabbit.internal.prod
 
-EOF
-}
-
-read_options(){
-  if [[ -f "${PLUGIN_SSH_OPTIONS_FILE}" ]]; then
-    source ${PLUGIN_SSH_OPTIONS_FILE}
-  fi  
-}
-
-write_options(){
-  local sshuser="$1"
-  local identity="$2"
-  local port="$3"
-
-  cat << EOF > ${PLUGIN_SSH_OPTIONS_FILE}
-sshuser=${sshuser}
-identity=${identity}
-
-port=${port}
 EOF
 }
 
@@ -180,8 +160,6 @@ plugin_main() {
     mkdir -p ${PLUGIN_DIR}
   fi
 
-  read_options
-
   if [ ! -n "${c_sshuser}" ]; then
     if [ ! -n "${sshuser}" ]; then
       c_sshuser="${USER}"  # default: Current executing user
@@ -191,21 +169,14 @@ plugin_main() {
   fi
 
   if [ ! -f "${c_identity}" ]; then
-    if [ ! -f "${identity}" ]; then
-      echo "Error: identity file is required" >&2
-      help >&2
-      exit 1
-    fi
-    echo "using: identity=${identity}"
-    c_identity="${identity}"
+    echo "Error: identity file is required" >&2
+    help >&2
+    exit 1
   fi
 
   if [ ! -n "${c_port}" ]; then
-    if [ ! -n "${port}" ]; then
-      port="22"    # default: 22
-    fi
-    echo "using: port=${port}"
-    c_port="${port}"
+    c_port="22"    # default: 22
+    echo "using: port=${c_port}"
   fi
 
   if [ "${sshargs}" != "" ]; then
@@ -216,9 +187,6 @@ plugin_main() {
     c_image="corbinu/ssh-server"
     echo "using: image=${c_image}"
   fi
-
-  # Caching current ssh options
-  write_options "${c_sshuser}" "${c_identity}" "${c_port}"
 
   # SSH Logging into desitnation node via Jump host
   run_ssh_node "${destnode}" "${c_sshuser}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}"

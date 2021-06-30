@@ -4,9 +4,9 @@
 
 A kubectl plugin to SSH into any machine within a network using a SSH jump host Pod.
 
-A `jump host` Pod is an intermediary Pod or an SSH gateway, through which a connection can be made to any machine within a network.
+A `jump host` Pod is an intermediary Pod through which a connection can be made to any machine within a network.
 
-Here is an scenario where you want to connect to a machine, but you have to go through a jump host Pod, because of firewalling, access privileges. etc. There is a number of valid reasons why the jump hosts are needed...
+Here is an scenario where you want to connect to a machine, but you have to go through a jump host Pod, because of firewalling, access privileges. etc. There is a number of valid reasons why the jump hosts are needed.
 
 ![](assets/arch-ssh-jumphost.png)
 

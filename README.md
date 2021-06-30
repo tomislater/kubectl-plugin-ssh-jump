@@ -31,7 +31,7 @@ $ chmod +x kubectl-ssh-jump
 $ sudo cp -p kubectl-ssh-jump /usr/local/bin/kubectl-ssh_jump
 ```
 
-Once in the $PATH, run:
+Then, run:
 ```sh
 $ kubectl plugin list
 

@@ -17,11 +17,7 @@ help(){
 options(){
   cat <<"EOF"
 Options:
-  <dest_node>                     Destination node name or IP address
-                                  dest_node must start from the following letters:
-                                  ASCII letters 'a' through 'z' or 'A' through 'Z',
-                                  the digits '0' through '9', or hyphen ('-')
-  -u, --user <sshuser>            SSH User name
+  <dest_node>                     Destination node name or IP address with user name
   -i, --identity <identity_file>  Identity key file, or PEM(Privacy Enhanced Mail)
   --image <image>                 Your custom image
   -P, --port <port>               SSH port for target node SSH server (default:22)
@@ -29,7 +25,7 @@ Options:
   -h, --help                      Show this message
 
 Example:
-  $ kubectl ssh-jump -i ~/.ssh/mykey.pem -u admin rabbit.internal.prod
+  $ kubectl ssh-jump -i ~/.ssh/mykey.pem admin@rabbit.internal.prod
 
 EOF
 }
@@ -41,13 +37,12 @@ cleanup_sshjump_pod(){
 
 run_ssh_node(){
   local destnode="$1"
-  local sshuser="$2"
-  local identity="$3"
-  local port="$4"
-  local sshargs="$5"
-  local image="$6"
+  local identity="$2"
+  local port="$3"
+  local sshargs="$4"
+  local image="$5"
 
-  # Install an SSH Server if not yet installed
+  # Install an SSH Server
   echo "Creating SSH jump host (Pod)..."
   cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -97,11 +92,10 @@ EOF
   pid_port_forward=$!
 
   # Inject public SSH key to sshjump
-  cat ${pubkey_sshjump} | \
-    kubectl exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
+  cat ${pubkey_sshjump} | kubectl exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
 
-  # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired Node
-  ssh -i ${identity} -p ${port} ${sshuser}@${destnode} \
+  # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired machine
+  ssh -i ${identity} -p ${port} ${destnode} \
     -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
     -o "StrictHostKeyChecking=no" ${sshargs}
 
@@ -119,10 +113,6 @@ plugin_main() {
 	help
 	exit 0
 	;;
-      "-u" | "--user" )
-	c_sshuser=$2
-	nSkip=2
-	;;
       "-i" | "--identity" )
 	c_identity=$2
 	nSkip=2
@@ -139,7 +129,7 @@ plugin_main() {
 	sshargs="$2"
 	nSkip=2
 	;;
-      [0-9a-zA-Z-]*)
+      [0-9a-zA-Z-@]*)
 	destnode=$1
 	;;
       *)
@@ -158,14 +148,6 @@ plugin_main() {
 
   if [ ! -d ${PLUGIN_DIR} ]; then
     mkdir -p ${PLUGIN_DIR}
-  fi
-
-  if [ ! -n "${c_sshuser}" ]; then
-    if [ ! -n "${sshuser}" ]; then
-      c_sshuser="${USER}"  # default: Current executing user
-    fi
-    echo "using: sshuser=${sshuser}"
-    c_sshuser="${sshuser}"
   fi
 
   if [ ! -f "${c_identity}" ]; then
@@ -189,7 +171,7 @@ plugin_main() {
   fi
 
   # SSH Logging into desitnation node via Jump host
-  run_ssh_node "${destnode}" "${c_sshuser}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}"
+  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}"
 
   cleanup_sshjump_pod
 }

@@ -46,11 +46,7 @@ Usage:
   kubectl ssh-jump <dest_node> [options]
 
 Options:
-  <dest_node>                     Destination node name or IP address
-                                  dest_node must start from the following letters:
-                                  ASCII letters 'a' through 'z' or 'A' through 'Z',
-                                  the digits '0' through '9', or hyphen ('-')
-  -u, --user <sshuser>            SSH User name
+  <dest_node>                     Destination node name or IP address with user name
   -i, --identity <identity_file>  Identity key file, or PEM(Privacy Enhanced Mail)
   --image <image>                 Your custom image
   -P, --port <port>               SSH port for target node SSH server (default:22)
@@ -58,7 +54,7 @@ Options:
   -h, --help                      Show this message
 
 Example:
-  $ kubectl ssh-jump -u admin -i ~/.ssh/mykey.pem rabbit.internal.prod
+  $ kubectl ssh-jump -i ~/.ssh/mykey.pem admin@rabbit.internal.prod
 ```
 
 ## Useful Links

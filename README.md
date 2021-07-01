@@ -10,7 +10,7 @@ A `jump host` Pod is an intermediary Pod through which a connection can be made 
 
 Here is an scenario where you want to connect to a machine, but you have to go through a jump host Pod, because of firewalling, access privileges. etc. There is a number of valid reasons why the jump hosts are needed.
 
-![](assets/arch-ssh-jumphost.png)
+![](assets/kubectl_ssh_jump_plugin.png)
 
 ## Pre-requistes
 This plugin needs the following programs:

@@ -4,7 +4,7 @@
 
 PLUGIN_DIR="${HOME}/.kube/kubectlssh"
 MAX_POD_CREATION_TIME=10   # unit: ~seconds
-RANDOM_POD_NAME=$(xxd -l 16 -c 16 -p < /dev/random)
+RANDOM_POD_NAME=ssh-jump-host-$(xxd -l 16 -c 16 -p < /dev/random)
 LOCAL_PORT=2222
 
 help(){

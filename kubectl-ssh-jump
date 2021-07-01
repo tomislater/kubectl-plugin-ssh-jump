@@ -73,7 +73,7 @@ EOF
     sleep 0.1
   done
 
-  # Generate temp private/public key to ssh to the sshjump if the pubkey isn't given
+  # Generate temp private/public key to ssh to the sshjump
   identity_sshjump=${PLUGIN_DIR}/id_rsa_sshjump
   pubkey_sshjump=${PLUGIN_DIR}/id_rsa_sshjump.pub
   if [ ! -f "${pubkey_sshjump}" ]; then

@@ -20,8 +20,6 @@ This plugin needs the following programs:
 
 ## Installation
 
-Install the plugin by copying the script in the $PATH of your shell.
-
 ```sh
 # Get source
 $ git clone git@github.com:tomislater/kubectl-plugin-ssh-jump.git
@@ -36,7 +34,7 @@ Then, run:
 $ kubectl plugin list
 
 The following kubectl-compatible plugins are available:
-/usr/local/bin/kubectl-ssh-jump
+/usr/local/bin/kubectl-ssh_jump
 
 $ kubectl ssh-jump
 ```

@@ -32,7 +32,7 @@ EOF
 
 cleanup_sshjump_pod(){
   echo "Clearning up SSH Jump host (Pod)..."
-  kubectl delete pod $RANDOM_POD_NAME --grace-period 0
+  kubectl delete pod $RANDOM_POD_NAME --grace-period 0 --force 2> /dev/null
 }
 
 run_ssh_node(){
@@ -121,6 +121,10 @@ plugin_main() {
 	c_port=$2
 	nSkip=2
   ;;
+      "--port-forward")
+	c_port_forward=$2
+	nSkip=2
+  ;;
       "--image")
 	c_image=$2
 	nSkip=2
@@ -168,6 +172,10 @@ plugin_main() {
   if [ ! -n "${c_image}" ]; then
     c_image="corbinu/ssh-server"
     echo "using: image=${c_image}"
+  fi
+
+  if [ -n "${c_port_forward}" ]; then
+    echo "port forwarding"
   fi
 
   # SSH Logging into desitnation node via Jump host

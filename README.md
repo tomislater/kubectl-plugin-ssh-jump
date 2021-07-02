@@ -42,19 +42,20 @@ $ kubectl ssh-jump
 ## How to use
 
 ```TXT
-Usage:
-  kubectl ssh-jump <dest_node> [options]
-
 Options:
-  <dest_node>                     Destination node name or IP address with user name
-  -i, --identity <identity_file>  Identity key file, or PEM(Privacy Enhanced Mail)
-  --image <image>                 Your custom image
-  -P, --port <port>               SSH port for target node SSH server (default:22)
-  -a, --args <args>               Args to exec in ssh session
-  -h, --help                      Show this message
+  <dest_node>                                 Destination node name or IP address with user name
+  -i, --identity <identity_file>              Identity key file, or PEM(Privacy Enhanced Mail)
+  --image <image>                             Your custom image
+  -P, --port <port>                           SSH port for target node SSH server (default:22)
+  --port-forward <local_port>:<remote_port>   If you just want to enable port forwarding
+  -a, --args <args>                           Args to exec in ssh session
+  -h, --help                                  Show this message
 
 Example:
   $ kubectl ssh-jump -i ~/.ssh/mykey.pem admin@rabbit.internal.prod
+
+Port forward example:
+  $ kubectl ssh-jump -i ~/.ssh/mykey.pem --port-forward 37017:27017 admin@mongo.internal.prod
 ```
 
 ## Useful Links

@@ -17,15 +17,19 @@ help(){
 options(){
   cat <<"EOF"
 Options:
-  <dest_node>                     Destination node name or IP address with user name
-  -i, --identity <identity_file>  Identity key file, or PEM(Privacy Enhanced Mail)
-  --image <image>                 Your custom image
-  -P, --port <port>               SSH port for target node SSH server (default:22)
-  -a, --args <args>               Args to exec in ssh session
-  -h, --help                      Show this message
+  <dest_node>                                 Destination node name or IP address with user name
+  -i, --identity <identity_file>              Identity key file, or PEM(Privacy Enhanced Mail)
+  --image <image>                             Your custom image
+  -P, --port <port>                           SSH port for target node SSH server (default:22)
+  --port-forward <local_port>:<remote_port>   If you just want to enable port forwarding
+  -a, --args <args>                           Args to exec in ssh session
+  -h, --help                                  Show this message
 
 Example:
   $ kubectl ssh-jump -i ~/.ssh/mykey.pem admin@rabbit.internal.prod
+
+Port forward example:
+  $ kubectl ssh-jump -i ~/.ssh/mykey.pem --port-forward 37017:27017 admin@mongo.internal.prod
 
 EOF
 }
@@ -41,6 +45,7 @@ run_ssh_node(){
   local port="$3"
   local sshargs="$4"
   local image="$5"
+  local port_forward="$6"
 
   # Install an SSH Server
   echo "Creating SSH jump host (Pod)..."
@@ -94,10 +99,18 @@ EOF
   # Inject public SSH key to sshjump
   cat ${pubkey_sshjump} | kubectl exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
 
-  # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired machine
-  ssh -i ${identity} -p ${port} ${destnode} \
-    -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
-    -o "StrictHostKeyChecking=no" ${sshargs}
+  if [ -n "${port_forward}" ];
+  then
+    # port forward
+    arr_port_forward=(${port_forward//:/ })
+    arr_destnode=(${destnode//@/ })
+    ssh -L ${arr_port_forward[0]}:${arr_destnode[1]}:${arr_port_forward[1]} root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump}
+  else
+    # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired machine
+    ssh -i ${identity} -p ${port} ${destnode} \
+      -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
+      -o "StrictHostKeyChecking=no" ${sshargs}
+  fi
 
   # Stop port-forward
   kill -3 ${pid_port_forward} 2>/dev/null
@@ -175,11 +188,11 @@ plugin_main() {
   fi
 
   if [ -n "${c_port_forward}" ]; then
-    echo "port forwarding"
+    echo "port forwarding enabled"
   fi
 
   # SSH Logging into desitnation node via Jump host
-  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}"
+  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}"
 
   cleanup_sshjump_pod
 }

@@ -34,11 +34,6 @@ Port forward example:
 EOF
 }
 
-cleanup_sshjump_pod(){
-  echo "Clearning up SSH Jump host (Pod)..."
-  kubectl delete pod $RANDOM_POD_NAME --grace-period 0 --force 2> /dev/null
-}
-
 run_ssh_node(){
   local destnode="$1"
   local identity="$2"
@@ -116,6 +111,9 @@ EOF
   kill -3 ${pid_port_forward} 2>/dev/null
 
   rm -f ${PLUGIN_DIR}/${LOCAL_PORT}.lock
+
+  echo "Clearning up SSH Jump host (Pod)..."
+  kubectl delete pod $RANDOM_POD_NAME --grace-period 0 --force 2> /dev/null
 }
 
 plugin_main() {
@@ -194,7 +192,6 @@ plugin_main() {
   # SSH Logging into desitnation node via Jump host
   run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}"
 
-  cleanup_sshjump_pod
 }
 
 plugin_main "$@"

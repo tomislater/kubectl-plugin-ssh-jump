@@ -99,7 +99,7 @@ EOF
     # port forward
     arr_port_forward=(${port_forward//:/ })
     arr_destnode=(${destnode//@/ })
-    ssh -L ${arr_port_forward[0]}:${arr_destnode[1]}:${arr_port_forward[1]} root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump}
+    ssh -o StrictHostKeyChecking=no -L ${arr_port_forward[0]}:${arr_destnode[1]}:${arr_port_forward[1]} root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump}
   else
     # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired machine
     ssh -i ${identity} -p ${port} ${destnode} \

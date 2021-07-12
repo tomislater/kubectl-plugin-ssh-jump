@@ -34,6 +34,17 @@ Port forward example:
 EOF
 }
 
+function cleanup() {
+  # Stop port-forward
+  kill -3 ${pid_port_forward} 2>/dev/null
+
+  # remove "lock"
+  rm -f ${PLUGIN_DIR}/${LOCAL_PORT}.lock
+
+  echo "Clearning up SSH Jump host (Pod)..."
+  kubectl delete pod ${RANDOM_POD_NAME} --grace-period 0 --force 2> /dev/null
+}
+
 run_ssh_node(){
   local destnode="$1"
   local identity="$2"
@@ -94,6 +105,8 @@ EOF
   # Inject public SSH key to sshjump
   cat ${pubkey_sshjump} | kubectl exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
 
+  trap cleanup SIGHUP EXIT
+
   if [ -n "${port_forward}" ];
   then
     # port forward
@@ -106,14 +119,6 @@ EOF
       -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
       -o "StrictHostKeyChecking=no" ${sshargs}
   fi
-
-  # Stop port-forward
-  kill -3 ${pid_port_forward} 2>/dev/null
-
-  rm -f ${PLUGIN_DIR}/${LOCAL_PORT}.lock
-
-  echo "Clearning up SSH Jump host (Pod)..."
-  kubectl delete pod $RANDOM_POD_NAME --grace-period 0 --force 2> /dev/null
 }
 
 plugin_main() {

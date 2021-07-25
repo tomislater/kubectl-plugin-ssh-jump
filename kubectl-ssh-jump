@@ -19,6 +19,7 @@ options(){
 Options:
   <dest_node>                                 Destination node name or IP address with user name
   -i, --identity <identity_file>              Identity key file, or PEM(Privacy Enhanced Mail)
+  -c, --context <context_name>                You can user other context
   --image <image>                             Your custom image
   -P, --port <port>                           SSH port for target node SSH server (default:22)
   --port-forward <local_port>:<remote_port>   If you just want to enable port forwarding
@@ -27,6 +28,7 @@ Options:
 
 Example:
   $ kubectl ssh-jump -i ~/.ssh/mykey.pem admin@rabbit.internal.prod
+  $ kubectl ssh-jump -i ~/.ssh/mykey.pem --context prod admin@rabbit.internal.prod
 
 Port forward example:
   $ kubectl ssh-jump -i ~/.ssh/mykey.pem --port-forward 37017:27017 admin@mongo.internal.prod
@@ -42,7 +44,7 @@ function cleanup() {
   rm -f ${PLUGIN_DIR}/${LOCAL_PORT}.lock
 
   echo "Clearning up SSH Jump host (Pod)..."
-  kubectl delete pod ${RANDOM_POD_NAME} --grace-period 0 --force 2> /dev/null
+  kubectl --context ${context} delete pod ${RANDOM_POD_NAME} --grace-period 0 --force 2> /dev/null
 }
 
 run_ssh_node(){
@@ -52,10 +54,12 @@ run_ssh_node(){
   local sshargs="$4"
   local image="$5"
   local port_forward="$6"
+  # we use it in cleanup func
+  context="$7"
 
   # Install an SSH Server
   echo "Creating SSH jump host (Pod)..."
-  cat <<EOF | kubectl apply -f -
+  cat <<EOF | kubectl --context ${context} apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
@@ -76,7 +80,7 @@ EOF
   c=1
   while [[ ${c} -le $(( MAX_POD_CREATION_TIME * 10 )) ]];
   do
-    pod_status=$(kubectl get pod $RANDOM_POD_NAME 2>/dev/null | tail -1 | awk '{print $3}')
+    pod_status=$(kubectl --context ${context} get pod $RANDOM_POD_NAME 2>/dev/null | tail -1 | awk '{print $3}')
     if [ "${pod_status}" = "Running" ]; then
       break
     fi
@@ -99,11 +103,11 @@ EOF
   done
   touch ${PLUGIN_DIR}/${LOCAL_PORT}.lock
 
-  kubectl port-forward ${RANDOM_POD_NAME} ${LOCAL_PORT}:22 2>/dev/null &
+  kubectl --context ${context} port-forward ${RANDOM_POD_NAME} ${LOCAL_PORT}:22 2>/dev/null &
   pid_port_forward=$!
 
   # Inject public SSH key to sshjump
-  cat ${pubkey_sshjump} | kubectl exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
+  cat ${pubkey_sshjump} | kubectl --context ${context} exec -i ${RANDOM_POD_NAME} -- /bin/bash -c "cat > /root/.ssh/authorized_keys"
 
   trap cleanup SIGHUP EXIT
 
@@ -131,6 +135,10 @@ plugin_main() {
 	;;
       "-i" | "--identity" )
 	c_identity=$2
+	nSkip=2
+  ;;
+      "-c" | "--context" )
+	c_context=$2
 	nSkip=2
 	;;
       "-P" | "--port")
@@ -178,8 +186,8 @@ plugin_main() {
 
   if [ ! -n "${c_port}" ]; then
     c_port="22"    # default: 22
-    echo "using: port=${c_port}"
   fi
+  echo "using: port=${c_port}"
 
   if [ "${sshargs}" != "" ]; then
     echo "using: args=${sshargs}"
@@ -187,15 +195,20 @@ plugin_main() {
 
   if [ ! -n "${c_image}" ]; then
     c_image="corbinu/ssh-server"
-    echo "using: image=${c_image}"
   fi
+  echo "using: image=${c_image}"
 
   if [ -n "${c_port_forward}" ]; then
     echo "port forwarding enabled"
   fi
 
+  if [ ! -n "${c_context}" ]; then
+    c_context="$(kubectl config current-context)"
+  fi
+  echo "using: context=${c_context}"
+
   # SSH Logging into desitnation node via Jump host
-  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}"
+  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}" "${c_context}"
 
 }
 

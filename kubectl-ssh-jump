@@ -121,8 +121,8 @@ EOF
   else
     # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired machine
     ssh -i ${identity} -p ${port} ${destnode} \
-      -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o \"StrictHostKeyChecking=no\" \"nc %h %p\"" \
-      -o StrictHostKeyChecking=no -o HostkeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ${sshargs}
+      -o "ProxyCommand ssh root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump} -o HostkeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -o StrictHostKeyChecking=no \"nc %h %p\"" \
+      -o StrictHostKeyChecking=no ${sshargs}
   fi
 }
 

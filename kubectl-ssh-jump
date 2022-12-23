@@ -6,6 +6,7 @@ PLUGIN_DIR="${HOME}/.kube/kubectlssh"
 MAX_POD_CREATION_TIME=10   # unit: ~seconds
 RANDOM_POD_NAME=ssh-jump-host-$(xxd -l 16 -c 16 -p < /dev/random)
 LOCAL_PORT=2222
+LOCAL_ADDRESS='127.0.0.1'
 
 help(){
   echo "Usage: "
@@ -23,6 +24,7 @@ Options:
   --image <image>                             Your custom image
   -P, --port <port>                           SSH port for target node SSH server (default:22)
   --port-forward <local_port>:<remote_port>   If you just want to enable port forwarding
+  --port-forward-bind-address <address>       Address to bind (optional, default:127.0.0.1)
   -a, --args <args>                           Args to exec in ssh session
   -h, --help                                  Show this message
 
@@ -56,6 +58,7 @@ run_ssh_node(){
   local port_forward="$6"
   # we use it in cleanup func
   context="$7"
+  local port_forward_bind_address="$8"
 
   # Install an SSH Server
   echo "Creating SSH jump host (Pod)..."
@@ -116,8 +119,13 @@ EOF
     # port forward
     arr_port_forward=(${port_forward//:/ })
     arr_destnode=(${destnode//@/ })
-    ssh -o StrictHostKeyChecking=no -o HostkeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa \
-      -L ${arr_port_forward[0]}:${arr_destnode[1]}:${arr_port_forward[1]} root@127.0.0.1 -p ${LOCAL_PORT} -i ${identity_sshjump}
+
+    ssh -o StrictHostKeyChecking=no \
+        -o HostkeyAlgorithms=+ssh-rsa \
+        -o PubkeyAcceptedAlgorithms=+ssh-rsa \
+        -L ${port_forward_bind_address:-$LOCAL_ADDRESS}:${arr_port_forward[0]}:${arr_destnode[1]}:${arr_port_forward[1]} root@127.0.0.1 \
+        -p ${LOCAL_PORT} \
+        -i ${identity_sshjump}
   else
     # Using the SSH Server as a jumphost (via port-forward proxy), ssh into the desired machine
     ssh -i ${identity} -p ${port} ${destnode} \
@@ -149,6 +157,10 @@ plugin_main() {
       "--port-forward")
 	c_port_forward=$2
 	nSkip=2
+  ;;
+      "--port-forward-bind-address")
+  c_port_forward_bind_address=$2
+  nSkip=2
   ;;
       "--image")
 	c_image=$2
@@ -209,7 +221,7 @@ plugin_main() {
   echo "using: context=${c_context}"
 
   # SSH Logging into desitnation node via Jump host
-  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}" "${c_context}"
+  run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}" "${c_context}" "${c_port_forward_bind_address}"
 
 }
 

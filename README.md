@@ -49,6 +49,7 @@ Options:
   --image <image>                             Your custom image
   -P, --port <port>                           SSH port for target node SSH server (default:22)
   --port-forward <local_port>:<remote_port>   If you just want to enable port forwarding
+  --port-forward-bind-address <address>       Address to bind (optional, default:127.0.0.1)
   -a, --args <args>                           Args to exec in ssh session
   -h, --help                                  Show this message
 

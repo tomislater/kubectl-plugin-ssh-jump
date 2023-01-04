@@ -219,6 +219,8 @@ plugin_main() {
     c_context="$(kubectl config current-context)"
   fi
   echo "using: context=${c_context}"
+  
+  echo "using: port-forward-bind-address=${c_port_forward_bind_address}"
 
   # SSH Logging into desitnation node via Jump host
   run_ssh_node "${destnode}" "${c_identity}" "${c_port}" "${sshargs}" "${c_image}" "${c_port_forward}" "${c_context}" "${c_port_forward_bind_address}"

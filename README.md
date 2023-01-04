@@ -2,7 +2,7 @@
 
 [![kubectl plugin](https://img.shields.io/badge/kubectl-plugin-blue.svg)](https://github.com/topics/kubectl-plugin)
 
-> It is a fork of [yokawasa/kubectl-plugin-ssh-jump](https://github.com/yokawasa/kubectl-plugin-ssh-jump). I had some ideas how can I improve this plugin, thus the fork. Currently, there is only a manual installation, but maybe I will add this plugin to krew. I do not know yet.
+*It is a fork of [yokawasa/kubectl-plugin-ssh-jump](https://github.com/yokawasa/kubectl-plugin-ssh-jump). I had some ideas how can I improve this plugin, thus the fork. Currently, there is only a manual installation, but maybe I will add this plugin to krew. I do not know yet.*
 
 A kubectl plugin to SSH into any machine within a network using a SSH jump host Pod.
 

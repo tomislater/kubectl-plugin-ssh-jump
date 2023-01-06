@@ -22,7 +22,7 @@ This plugin needs the following programs:
 
 ```sh
 # Get source
-$ git clone git@github.com:tomislater/kubectl-plugin-ssh-jump.git
+$ git clone https://github.com/tomislater/kubectl-plugin-ssh-jump.git
 $ cd kubectl-plugin-ssh-jump
 $ chmod +x kubectl-ssh-jump
 # Add kubeclt-ssh-jump to the install path.

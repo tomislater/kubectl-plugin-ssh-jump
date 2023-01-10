@@ -14,7 +14,7 @@ Here is an scenario where you want to connect to a machine, but you have to go t
 
 ## Pre-requistes
 This plugin needs the following programs:
-* ssh
+* ssh (>=8.5)
 * ssh-agent
 * ssh-keygen
 
